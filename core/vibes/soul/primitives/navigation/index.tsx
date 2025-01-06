@@ -11,6 +11,7 @@ import React, {
   forwardRef,
   Ref,
   startTransition,
+  Suspense,
   useActionState,
   useCallback,
   useEffect,
@@ -175,6 +176,19 @@ const navGroupClassName =
   'block rounded-lg bg-[var(--nav-group-background,transparent)] px-3 py-2 font-[family-name:var(--nav-group-font-family,var(--font-family-body))] font-medium text-[var(--nav-group-text,hsl(var(--foreground)))] ring-[var(--nav-focus,hsl(var(--primary)))] transition-colors hover:bg-[var(--nav-group-background-hover,hsl(var(--contrast-100)))] hover:text-[var(--nav-group-text-hover,hsl(var(--foreground)))] focus-visible:outline-0 focus-visible:ring-2';
 const navButtonClassName =
   'relative rounded-lg bg-[var(--nav-button-background,transparent)] p-1.5 text-[var(--nav-button-icon,hsl(var(--foreground)))] ring-[var(--nav-focus,hsl(var(--primary)))] transition-colors focus-visible:outline-0 focus-visible:ring-2 @4xl:hover:bg-[var(--nav-button-background-hover,hsl(var(--contrast-100)))] @4xl:hover:text-[var(--nav-button-icon-hover,hsl(var(--foreground)))]';
+
+async function CartCount({ streamableCount }: { streamableCount?: Streamable<number | null> }) {
+  const count = await streamableCount;
+
+  return (
+    count != null &&
+    count > 0 && (
+      <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--nav-cart-count-background,hsl(var(--foreground)))] font-[family-name:var(--nav-cart-count-font-family,var(--font-family-body))] text-xs text-[var(--nav-cart-count-text,hsl(var(--background)))]">
+        {count}
+      </span>
+    )
+  );
+}
 
 /**
  * This component supports various CSS variables for theming. Here's a comprehensive list, along
@@ -535,21 +549,13 @@ export const Navigation = forwardRef(function Navigation<S extends SearchResult>
           </Link>
           <Link aria-label={cartLabel} className={navButtonClassName} href={cartHref}>
             <ShoppingBag size={20} strokeWidth={1} />
-            <Stream
+            <Suspense
               fallback={
                 <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 animate-pulse items-center justify-center rounded-full bg-contrast-100 text-xs text-background" />
               }
-              value={streamableCartCount}
             >
-              {(cartCount) =>
-                cartCount != null &&
-                cartCount > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--nav-cart-count-background,hsl(var(--foreground)))] font-[family-name:var(--nav-cart-count-font-family,var(--font-family-body))] text-xs text-[var(--nav-cart-count-text,hsl(var(--background)))]">
-                    {cartCount}
-                  </span>
-                )
-              }
-            </Stream>
+              <CartCount streamableCount={streamableCartCount} />
+            </Suspense>
           </Link>
 
           {/* Locale / Language Dropdown */}
